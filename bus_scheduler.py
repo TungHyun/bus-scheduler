@@ -39,7 +39,7 @@ def simulated_annealing(distance_matrix, T=1000, alpha=0.99, stopping_T=1):
 # ===== Giao diện Streamlit =====
 st.title("🚌 Tối ưu lộ trình xe buýt/ tàu điện bằng Thuật toán Tôi thép (Simulated Annealing)")
 
-st.subheader("📌 Nhập ma trận thời gian di chuyển (phút)")
+st.subheader("📌 Bảng thời gian di chuyển giữa các điểm (phút)")
 n = st.number_input("Số điểm dừng:", min_value=2, max_value=10, value=3)
 
 # Tạo ma trận chỉ 1 lần khi số điểm dừng thay đổi
