@@ -46,6 +46,10 @@ n = st.number_input("Số điểm dừng:", min_value=2, max_value=10, value=3)
 if "matrix" not in st.session_state or len(st.session_state.matrix) != n:
     st.session_state.matrix = [[0 if i == j else random.randint(5, 30) for j in range(n)] for i in range(n)]
 
+# Nút tạo ma trận mới
+if st.button("🎲 Random lộ trình mới"):
+    st.session_state.matrix = [[0 if i == j else random.randint(5, 30) for j in range(n)] for i in range(n)]
+
 # Bảng editable (người dùng chỉnh trực tiếp)
 columns = [f"Điểm {j+1}" for j in range(n)]
 index = [f"Điểm {i+1}" for i in range(n)]
