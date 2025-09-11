@@ -46,21 +46,14 @@ n = st.number_input("Số điểm dừng:", min_value=2, max_value=10, value=3)
 if "matrix" not in st.session_state or len(st.session_state.matrix) != n:
     st.session_state.matrix = [[0 if i == j else random.randint(5, 30) for j in range(n)] for i in range(n)]
 
-# Lấy ma trận hiện tại
+# Bảng editable (người dùng chỉnh trực tiếp)
 columns = [f"Điểm {j+1}" for j in range(n)]
 index = [f"Điểm {i+1}" for i in range(n)]
 df_raw = pd.DataFrame(st.session_state.matrix, columns=columns, index=index)
-
-# Cho phép chỉnh sửa bảng (editable)
 edited_df = st.data_editor(df_raw, num_rows="fixed", key="matrix_editor")
 
 # Cập nhật session_state bằng dữ liệu đã chỉnh sửa
 st.session_state.matrix = edited_df.values.tolist()
-
-# Hiển thị bảng có chữ "phút"
-df_display = edited_df.astype(str) + " phút"
-st.write("### Ma trận thời gian di chuyển")
-st.dataframe(df_display)
 
 # Chạy tối ưu
 if st.button("🚀 Chạy tối ưu"):
