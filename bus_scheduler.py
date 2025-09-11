@@ -42,20 +42,29 @@ st.title("🚌 Tối ưu lộ trình xe buýt/ tàu điện bằng Thuật toán
 st.subheader("📌 Nhập ma trận thời gian di chuyển (phút)")
 n = st.number_input("Số điểm dừng:", min_value=2, max_value=10, value=3)
 
-# Tạo bảng mặc định (dữ liệu gốc chỉ là số)
-default_matrix = [[0 if i == j else random.randint(5, 30) for j in range(n)] for i in range(n)]
+# Tạo ma trận chỉ 1 lần khi số điểm dừng thay đổi
+if "matrix" not in st.session_state or len(st.session_state.matrix) != n:
+    st.session_state.matrix = [[0 if i == j else random.randint(5, 30) for j in range(n)] for i in range(n)]
+
+# Lấy ma trận hiện tại
 columns = [f"Điểm {j+1}" for j in range(n)]
 index = [f"Điểm {i+1}" for i in range(n)]
-df_raw = pd.DataFrame(default_matrix, columns=columns, index=index)
+df_raw = pd.DataFrame(st.session_state.matrix, columns=columns, index=index)
+
+# Cho phép chỉnh sửa bảng (editable)
+edited_df = st.data_editor(df_raw, num_rows="fixed", key="matrix_editor")
+
+# Cập nhật session_state bằng dữ liệu đã chỉnh sửa
+st.session_state.matrix = edited_df.values.tolist()
 
 # Hiển thị bảng có chữ "phút"
-df_display = df_raw.astype(str) + " phút"
+df_display = edited_df.astype(str) + " phút"
 st.write("### Ma trận thời gian di chuyển")
 st.dataframe(df_display)
 
 # Chạy tối ưu
 if st.button("🚀 Chạy tối ưu"):
-    distance_matrix = df_raw.values.tolist()
+    distance_matrix = st.session_state.matrix
     best_route, best_cost = simulated_annealing(distance_matrix)
     route_str = " → ".join([f"Điểm {i+1}" for i in best_route])
     
