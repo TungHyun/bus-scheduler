@@ -39,20 +39,24 @@ def simulated_annealing(distance_matrix, T=1000, alpha=0.99, stopping_T=1):
 # ===== Giao diện Streamlit =====
 st.title("🚌 Tối ưu lộ trình bằng Thuật toán Tôi luyện (Simulated Annealing)")
 
-st.subheader("📌 Nhập ma trận khoảng cách")
+st.subheader("📌 Nhập ma trận thời gian di chuyển (phút)")
 n = st.number_input("Số điểm dừng:", min_value=2, max_value=10, value=3)
 
-# Tạo bảng nhập liệu
-default_matrix = [[0 if i == j else random.randint(10, 50) for j in range(n)] for i in range(n)]
-df = pd.DataFrame(default_matrix)
-edited_df = st.data_editor(df, num_rows="dynamic", key="matrix_input")
+# Tạo bảng mặc định
+default_matrix = [[0 if i == j else random.randint(5, 30) for j in range(n)] for i in range(n)]
+columns = [f"Điểm {j+1}" for j in range(n)]
+index = [f"Điểm {i+1}" for i in range(n)]
+df = pd.DataFrame(default_matrix, columns=columns, index=index)
 
+# Cho phép chỉnh sửa bảng
+edited_df = st.data_editor(df, num_rows="dynamic", key="matrix_input")
 distance_matrix = edited_df.values.tolist()
 
 if st.button("🚀 Chạy tối ưu"):
     best_route, best_cost = simulated_annealing(distance_matrix)
-    route_str = " → ".join(map(str, best_route))
+    # Đổi số thành "Điểm i"
+    route_str = " → ".join([f"Điểm {i+1}" for i in best_route])
     
     st.success("✅ Kết quả tìm được:")
     st.write(f"**Lộ trình tối ưu:** {route_str}")
-    st.write(f"**Tổng quãng đường:** {best_cost}")
+    st.write(f"**Tổng thời gian:** {best_cost} phút")
