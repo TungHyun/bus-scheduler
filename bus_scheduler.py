@@ -1,59 +1,81 @@
 import streamlit as st
 import random
-import numpy as np
+import math
 
-# Hàm chi phí (tổng thời gian chạy + số chuyến)
-def cost(schedule):
-    total_time = sum(schedule)
-    overload_penalty = abs(len(schedule) - st.session_state["num_buses"]) * 10
-    return total_time + overload_penalty
+# -------------------------------
+# Hàm tính chi phí (tổng quãng đường)
+# -------------------------------
+def tinh_chi_phi(lo_trinh, khoang_cach):
+    tong = 0
+    for i in range(len(lo_trinh) - 1):
+        a = lo_trinh[i]
+        b = lo_trinh[i + 1]
+        tong += khoang_cach[a][b]
+    return tong
 
-# Sinh lời giải lân cận
-def neighbor(schedule):
-    new_schedule = schedule[:]
-    i = random.randint(0, len(schedule) - 1)
-    new_schedule[i] += random.choice([-5, 5])
-    new_schedule[i] = max(5, new_schedule[i])  # thời gian tối thiểu 5 phút
-    return new_schedule
+# -------------------------------
+# Sinh một lộ trình ngẫu nhiên
+# -------------------------------
+def tao_lo_trinh(so_diem):
+    lo_trinh = list(range(so_diem))
+    random.shuffle(lo_trinh)
+    return lo_trinh
 
+# -------------------------------
+# Sinh lộ trình lân cận
+# -------------------------------
+def lo_trinh_lan_can(lo_trinh):
+    a, b = random.sample(range(len(lo_trinh)), 2)
+    lo_trinh_moi = lo_trinh[:]
+    lo_trinh_moi[a], lo_trinh_moi[b] = lo_trinh_moi[b], lo_trinh_moi[a]
+    return lo_trinh_moi
+
+# -------------------------------
 # Thuật toán Simulated Annealing
-def simulated_annealing(num_buses, num_routes, iterations, temp):
-    # Khởi tạo lịch ngẫu nhiên
-    schedule = [random.randint(10, 50) for _ in range(num_buses)]
-    best = schedule[:]
-    best_cost = cost(best)
+# -------------------------------
+def toi_thep(khoang_cach, nhiet_do=1000, giam_nhiet=0.95, vonglap=1000):
+    lo_trinh_ht = tao_lo_trinh(len(khoang_cach))
+    chi_phi_ht = tinh_chi_phi(lo_trinh_ht, khoang_cach)
 
-    for _ in range(iterations):
-        new_schedule = neighbor(schedule)
-        c_old, c_new = cost(schedule), cost(new_schedule)
+    lo_trinh_best = lo_trinh_ht[:]
+    chi_phi_best = chi_phi_ht
 
-        if c_new < c_old or random.random() < np.exp((c_old - c_new) / temp):
-            schedule = new_schedule[:]
+    for v in range(vonglap):
+        lo_trinh_moi = lo_trinh_lan_can(lo_trinh_ht)
+        chi_phi_moi = tinh_chi_phi(lo_trinh_moi, khoang_cach)
 
-        if cost(schedule) < best_cost:
-            best = schedule[:]
-            best_cost = cost(best)
+        if chi_phi_moi < chi_phi_ht:
+            lo_trinh_ht, chi_phi_ht = lo_trinh_moi, chi_phi_moi
+        else:
+            xac_suat = math.exp(-(chi_phi_moi - chi_phi_ht) / nhiet_do)
+            if random.random() < xac_suat:
+                lo_trinh_ht, chi_phi_ht = lo_trinh_moi, chi_phi_moi
 
-        temp *= 0.99  # giảm nhiệt độ dần
+        if chi_phi_ht < chi_phi_best:
+            lo_trinh_best, chi_phi_best = lo_trinh_ht[:], chi_phi_ht
 
-    return best, best_cost
+        nhiet_do *= giam_nhiet
 
+    return lo_trinh_best, chi_phi_best
 
-# ================= STREAMLIT UI =================
-st.title("🚌 Tối ưu Lịch Xe Buýt bằng Thuật toán Tôi thép (SA)")
+# -------------------------------
+# Giao diện Streamlit
+# -------------------------------
+st.title("🚍 Tối ưu lịch trình xe buýt bằng Thuật toán Tôi Thép")
 
-st.sidebar.header("⚙️ Tuỳ chọn")
-num_buses = st.sidebar.number_input("Số xe buýt", 1, 20, 5)
-num_routes = st.sidebar.number_input("Số tuyến đường", 1, 10, 3)
-iterations = st.sidebar.slider("Số lần lặp", 100, 5000, 1000, 100)
-temperature = st.sidebar.slider("Nhiệt độ ban đầu", 10, 500, 100, 10)
+# Nhập số điểm dừng
+so_diem = st.slider("Chọn số điểm dừng:", 3, 10, 5)
 
-if "num_buses" not in st.session_state:
-    st.session_state["num_buses"] = num_buses
+# Sinh ma trận khoảng cách ngẫu nhiên
+random.seed(42)
+khoang_cach = [[0 if i == j else random.randint(10, 40) for j in range(so_diem)] for i in range(so_diem)]
 
-if st.button("🚀 Chạy tối ưu"):
-    best_schedule, best_cost = simulated_annealing(num_buses, num_routes, iterations, temperature)
-    st.success("Lịch chạy xe buýt tối ưu tìm được:")
-    for i, t in enumerate(best_schedule, 1):
-        st.write(f"Xe {i}: {t} phút/chuyến")
-    st.write(f"👉 Tổng chi phí = {best_cost}")
+st.subheader("📌 Ma trận khoảng cách")
+st.write(khoang_cach)
+
+if st.button("Chạy tối ưu"):
+    lo_trinh, chiphi = toi_thep(khoang_cach)
+
+    st.success("✅ Kết quả tối ưu tìm được:")
+    st.write("Lộ trình xe buýt:", lo_trinh)
+    st.write("Tổng thời gian (phút):", chiphi)
