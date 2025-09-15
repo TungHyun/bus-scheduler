@@ -68,7 +68,10 @@ selected_ben = ben_xe[:n]
 
 # chọn điểm đầu & điểm cuối
 start_point = st.selectbox("🚏 Chọn điểm xuất phát", selected_ben, index=0)
-end_point = st.selectbox("🏁 Chọn điểm kết thúc", selected_ben, index=min(1, n-1))
+
+# danh sách điểm cuối (loại bỏ điểm đầu)
+end_options = [b for b in selected_ben if b != start_point]
+end_point = st.selectbox("🏁 Chọn điểm kết thúc", end_options, index=0)
 
 # Tạo ma trận chỉ 1 lần khi số bến thay đổi
 if "matrix" not in st.session_state or len(st.session_state.matrix) != n:
@@ -94,6 +97,4 @@ if st.button("🚀 Chạy tối ưu"):
     best_route, best_cost = simulated_annealing(distance_matrix, start_idx, end_idx)
     route_str = " → ".join([selected_ben[i] for i in best_route])
     
-    st.success("✅ Kết quả tìm được:")
-    st.write(f"**Lộ trình tối ưu:** {route_str}")
-    st.write(f"**Tổng thời gian:** {best_cost} phút")
+    st.s
