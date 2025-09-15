@@ -3,6 +3,20 @@ import random
 import numpy as np
 import pandas as pd
 
+# ===== Danh sách bến xe Hà Nội =====
+ben_xe = [
+    "Bến xe Giáp Bát",
+    "Bến xe Nước Ngầm",
+    "Bến xe Mỹ Đình",
+    "Bến xe Gia Lâm",
+    "Bến xe Yên Nghĩa",
+    "Bến xe Sơn Tây",
+    "Bến xe Trần Khát Chân",
+    "Bến xe Kim Mã",
+    "Bến xe Thượng Đình",
+    "Bến xe Long Biên"
+]
+
 # ===== Hàm tính chi phí =====
 def calculate_cost(route, distance_matrix):
     cost = 0
@@ -10,7 +24,7 @@ def calculate_cost(route, distance_matrix):
         cost += distance_matrix[route[i]][route[i+1]]
     return cost
 
-# ===== Thuật toán tôi luyện =====
+# ===== Thuật toán tôi thép (Simulated Annealing) =====
 def simulated_annealing(distance_matrix, T=1000, alpha=0.99, stopping_T=1):
     n = len(distance_matrix)
     current_solution = list(range(n))
@@ -37,23 +51,24 @@ def simulated_annealing(distance_matrix, T=1000, alpha=0.99, stopping_T=1):
     return best_solution, best_cost
 
 # ===== Giao diện Streamlit =====
-st.title("🚌 Tối ưu lộ trình xe buýt/ tàu điện bằng Thuật toán Tôi thép (Simulated Annealing)")
+st.title("🚌 Tối ưu lộ trình xe buýt Hà Nội bằng Thuật toán Tôi thép")
 
-st.subheader("📌 Bảng thời gian di chuyển giữa các điểm (phút)")
-n = st.number_input("Số điểm dừng:", min_value=2, max_value=10, value=3)
+st.subheader("📌 Bảng thời gian di chuyển giữa các bến (phút)")
+n = st.number_input("Số bến xe muốn xét:", min_value=2, max_value=len(ben_xe), value=4)
 
-# Tạo ma trận chỉ 1 lần khi số điểm dừng thay đổi
+# chọn tên bến tương ứng
+selected_ben = ben_xe[:n]
+
+# Tạo ma trận chỉ 1 lần khi số bến thay đổi
 if "matrix" not in st.session_state or len(st.session_state.matrix) != n:
-    st.session_state.matrix = [[0 if i == j else random.randint(5, 30) for j in range(n)] for i in range(n)]
+    st.session_state.matrix = [[0 if i == j else random.randint(10, 50) for j in range(n)] for i in range(n)]
 
 # Nút tạo ma trận mới
-if st.button("🎲 Random lộ trình mới"):
-    st.session_state.matrix = [[0 if i == j else random.randint(5, 30) for j in range(n)] for i in range(n)]
+if st.button("🎲 Random thời gian mới"):
+    st.session_state.matrix = [[0 if i == j else random.randint(10, 50) for j in range(n)] for i in range(n)]
 
 # Bảng editable (người dùng chỉnh trực tiếp)
-columns = [f"Điểm {j+1}" for j in range(n)]
-index = [f"Điểm {i+1}" for i in range(n)]
-df_raw = pd.DataFrame(st.session_state.matrix, columns=columns, index=index)
+df_raw = pd.DataFrame(st.session_state.matrix, columns=selected_ben, index=selected_ben)
 edited_df = st.data_editor(df_raw, num_rows="fixed", key="matrix_editor")
 
 # Cập nhật session_state bằng dữ liệu đã chỉnh sửa
@@ -63,7 +78,7 @@ st.session_state.matrix = edited_df.values.tolist()
 if st.button("🚀 Chạy tối ưu"):
     distance_matrix = st.session_state.matrix
     best_route, best_cost = simulated_annealing(distance_matrix)
-    route_str = " → ".join([f"Điểm {i+1}" for i in best_route])
+    route_str = " → ".join([selected_ben[i] for i in best_route])
     
     st.success("✅ Kết quả tìm được:")
     st.write(f"**Lộ trình tối ưu:** {route_str}")
